@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Echo Garden Shopify handoff receiver</title>
+  <style>
+    :root{
+      color-scheme: dark;
+      --bg:#05070b;
+      --panel:#111821;
+      --fg:#e7eef7;
+      --muted:#9eabb9;
+      --line:rgba(255,255,255,.12);
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--fg);
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
+    }
+    main{
+      max-width:920px;
+      margin:0 auto;
+      padding:28px 18px 40px;
+    }
+    h1{
+      font-size:20px;
+      margin:0 0 8px;
+    }
+    p{
+      color:var(--muted);
+      line-height:1.6;
+      margin:0 0 18px;
+    }
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:10px;
+      margin:18px 0;
+    }
+    .item{
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:10px;
+      background:var(--panel);
+      min-width:0;
+    }
+    .label{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:4px;
+    }
+    .value{
+      overflow-wrap:anywhere;
+      font-size:13px;
+    }
+    pre{
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#0a0f15;
+      padding:14px;
+      overflow:auto;
+      line-height:1.45;
+      font-size:12px;
+    }
+    a{
+      color:#9fd3ff;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Shopify handoff receiver</h1>
+    <p>本番 Shopify API には接続していません。Echo Garden が渡す payload を sessionStorage または URL から読み込み、商品選択へ渡す前の状態だけ確認します。</p>
+
+    <div id="summary" class="summary"></div>
+    <p id="receiverNotice"></p>
+    <pre id="payloadView">payload を読み込んでいます...</pre>
+    <p><a href="index.html">Echo Garden に戻る</a></p>
+  </main>
+
+  <script type="module">
+    import {
+      getEchoGardenHandoff,
+      hasValidArtworkPayload,
+    } from './src/services/shopify/shopify-handoff-receiver.js';
+
+    const summary = document.getElementById('summary');
+    const receiverNotice = document.getElementById('receiverNotice');
+    const payloadView = document.getElementById('payloadView');
+
+    function addSummary(label, value){
+      const item = document.createElement('div');
+      item.className = 'item';
+      const labelEl = document.createElement('span');
+      labelEl.className = 'label';
+      labelEl.textContent = label;
+      const valueEl = document.createElement('span');
+      valueEl.className = 'value';
+      valueEl.textContent = value ?? '(none)';
+      item.append(labelEl, valueEl);
+      summary.appendChild(item);
+    }
+
+    try{
+      const handoff = getEchoGardenHandoff();
+      const payload = handoff.payload;
+
+      addSummary('status', handoff.status);
+      addSummary('mode', handoff.mode);
+      addSummary('storage_key', handoff.storage_key);
+      addSummary('artwork_id', payload.artwork_id);
+      addSummary('serial_code', payload.serial_code);
+      addSummary('aspect_bucket', payload.aspect_bucket);
+      addSummary('artwork_master_url', payload.artwork_master_url);
+      addSummary('handoff_status', payload.handoff_status);
+      addSummary('valid', hasValidArtworkPayload(handoff) ? 'yes' : 'no');
+
+      if(handoff.status === 'missing'){
+        receiverNotice.textContent = 'Echo Garden からの payload は見つかりません。通常の Shopify 流入として扱えます。';
+      }else if(handoff.status === 'incomplete'){
+        receiverNotice.textContent = `payload はありますが不足項目があります: ${payload.missing_required_fields.join(', ')}`;
+      }else if(handoff.status === 'error'){
+        receiverNotice.textContent = `payload の読み込みに失敗しました: ${handoff.error?.message || 'unknown error'}`;
+      }else{
+        receiverNotice.textContent = 'Echo Garden 由来の artwork payload を受信しました。';
+      }
+
+      payloadView.textContent = JSON.stringify(handoff, null, 2);
+      console.info('Echo Garden Shopify handoff received:', handoff);
+    }catch(err){
+      payloadView.textContent = `payload を確認できませんでした。\n${err.message}`;
+      receiverNotice.textContent = 'payload の確認中に予期しないエラーが発生しました。';
+      console.error('Echo Garden Shopify handoff receive failed:', err);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+epics:
+  - id: FDMVP-001
+    title: Extract Father’s Day MVP branch from existing Cloudflare save baseline
+    priority: S
+    tasks:
+      - id: FDMVP-001-01
+        title: Identify current R2 image save implementation
+        details: Locate current code that uploads/saves generated PNG images to Cloudflare R2. Document file paths and API shape.
+        acceptance:
+          - Existing image save path is documented.
+          - No behavior is changed yet.
+      - id: FDMVP-001-02
+        title: Create Father’s Day MVP route shell
+        details: Add create and lp route shells without breaking existing app.
+        acceptance:
+          - /create/?token=test renders MVP creation shell.
+          - /lp/?id=test renders LP shell.
+
+  - id: FDMVP-002
+    title: Token session and D1 schema
+    priority: S
+    tasks:
+      - id: FDMVP-002-01
+        title: Add D1 schema
+        details: Add migrations based on docs/db-schema.sql.
+        acceptance:
+          - gift_sessions table exists.
+          - artworks table exists.
+          - gift_messages table exists.
+          - shipping_addresses table exists.
+      - id: FDMVP-002-02
+        title: Implement session lookup API
+        details: GET /api/session?token=...
+        acceptance:
+          - Valid token returns session state.
+          - Invalid token returns 404 or 403.
+      - id: FDMVP-002-03
+        title: Enforce max 2 generation attempts server-side
+        details: Do not rely only on localStorage/client state.
+        acceptance:
+          - Third attempt is rejected by API.
+          - Browser reload/back cannot reset attempts.
+
+  - id: FDMVP-003
+    title: Smartphone media capture and upload
+    priority: S
+    tasks:
+      - id: FDMVP-003-01
+        title: Implement media mode selection
+        details: User can choose record camera+mic, upload audio, or upload video.
+        acceptance:
+          - Three modes are visible.
+          - Unsupported modes show fallback message.
+      - id: FDMVP-003-02
+        title: Implement camera+mic recording
+        details: Use MediaRecorder where supported. Max 60 seconds. Start/stop manually.
+        acceptance:
+          - Recording starts and stops.
+          - Timer displays 00:00 to 01:00.
+          - Auto stop at 60 seconds.
+      - id: FDMVP-003-03
+        title: Implement upload validation
+        details: Validate audio/video file type and duration <= 60 seconds.
+        acceptance:
+          - Longer than 60 sec is rejected.
+          - Unsupported file type is rejected.
+      - id: FDMVP-003-04
+        title: Implement silent audio check
+        details: If audio is effectively silent, do not generate.
+        acceptance:
+          - Silent recording shows error.
+          - Non-silent recording proceeds.
+
+  - id: FDMVP-004
+    title: Video and image save
+    priority: S
+    tasks:
+      - id: FDMVP-004-01
+        title: Preserve existing image save
+        details: Confirm existing generated PNG upload still works.
+        acceptance:
+          - PNG is saved to R2.
+          - image_url is stored in D1.
+      - id: FDMVP-004-02
+        title: Add video/original media upload to R2
+        details: Save recorded/uploaded video or generated canvas recording where possible.
+        acceptance:
+          - video_url or original_media_url is saved to D1.
+          - Upload progress is visible.
+      - id: FDMVP-004-03
+        title: Create artwork record per attempt
+        details: Each generation attempt creates an artwork row.
+        acceptance:
+          - artwork attempt number is stored.
+          - asset URLs are attached to artwork.
+
+  - id: FDMVP-005
+    title: Compare and final selection
+    priority: S
+    tasks:
+      - id: FDMVP-005-01
+        title: Build compare UI
+        details: Show up to 2 attempts with image/video preview.
+        acceptance:
+          - User can compare 1 or 2 attempts.
+      - id: FDMVP-005-02
+        title: Implement final selection
+        details: User selects final artwork. Selection becomes locked.
+        acceptance:
+          - selected_artwork_id is stored.
+          - session status becomes selected.
+          - UI prevents changes after selection.
+
+  - id: FDMVP-006
+    title: Gift message and shipping form
+    priority: A
+    tasks:
+      - id: FDMVP-006-01
+        title: Build message and shipping form
+        details: Collect to/from/message/postal/address.
+        acceptance:
+          - Form validates required fields.
+          - Data is stored in D1.
+      - id: FDMVP-006-02
+        title: Final submit
+        details: Change session status to submitted.
+        acceptance:
+          - submitted_at is stored.
+          - completion page is shown.
+
+  - id: FDMVP-007
+    title: Parameter LP
+    priority: A
+    tasks:
+      - id: FDMVP-007-01
+        title: Implement LP API
+        details: GET /api/lp?id=...
+        acceptance:
+          - Returns only public-safe data.
+          - Does not return address.
+      - id: FDMVP-007-02
+        title: Implement LP page
+        details: /lp/?id=... displays selected artwork, video, names, message.
+        acceptance:
+          - Invalid id shows not found.
+          - noindex meta is included.
+
+  - id: FDMVP-008
+    title: Office export
+    priority: B
+    tasks:
+      - id: FDMVP-008-01
+        title: Add CSV export endpoint or script
+        details: Export submitted sessions for Canva and shipping workflow.
+        acceptance:
+          - CSV contains lp_url, qr_target_url, names, message, postal, address, image_url.

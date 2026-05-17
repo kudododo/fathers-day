@@ -1,0 +1,14 @@
+# Copy this file to .dev.vars before running wrangler locally.
+
+APP_BASE_URL=http://127.0.0.1:8788
+LP_BASE_URL=http://127.0.0.1:8788/lp
+CREATE_BASE_URL=http://127.0.0.1:8788/create
+
+MAX_GENERATION_ATTEMPTS=2
+MAX_MEDIA_DURATION_SECONDS=60
+MAX_AUDIO_UPLOAD_MB=20
+MAX_VIDEO_UPLOAD_MB=100
+CAMPAIGN_SLUG=fathers-day-2026
+
+OFFICE_EXPORT_SECRET=replace-with-long-random-secret
+R2_PUBLIC_BASE_URL=https://assets.example.com

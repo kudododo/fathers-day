@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Echo Garden Father’s Day Create</title>
+  <link rel="stylesheet" href="/styles/mvp.css" />
+</head>
+<body>
+  <main class="mvp-shell">
+    <p class="eyebrow">Echo Garden Father’s Day MVP</p>
+    <h1>想いを録って、作品の元データを準備する</h1>
+    <p class="lede">スマートフォンを前提に、録画またはアップロードしたメディアを60秒以内で確認します。ここではまだ生成回数は消費されません。</p>
+
+    <section class="mvp-card">
+      <h2>現在の状態</h2>
+      <dl class="meta-list">
+        <div><dt>Token</dt><dd id="tokenValue">-</dd></div>
+        <div><dt>Session API</dt><dd id="sessionStatus">loading...</dd></div>
+      </dl>
+      <p id="sessionBanner" class="status-banner" data-tone="neutral">loading...</p>
+    </section>
+
+    <div id="createFlow">
+      <section class="mvp-card">
+        <h2>入力方法</h2>
+        <div class="mode-grid">
+          <button type="button" class="mode-button" data-mode="record">Record camera + microphone</button>
+          <button type="button" class="mode-button" data-mode="upload-audio">Upload audio</button>
+          <button type="button" class="mode-button" data-mode="upload-video">Upload video</button>
+        </div>
+      </section>
+
+      <section id="recordPanel" class="mvp-card" hidden>
+        <div class="section-heading">
+          <div>
+            <h2>録画する</h2>
+            <p class="section-copy">モバイルでは 9:16、デスクトップでは 16:9 でプレビューします。</p>
+          </div>
+          <div class="timer-badge" id="recordTimer">00:00</div>
+        </div>
+        <div class="preview-frame" id="previewFrame" data-live="false">
+          <video id="livePreview" autoplay muted playsinline></video>
+        </div>
+        <p id="recordingState" class="micro-copy">録音前です。</p>
+        <div class="action-row">
+          <button type="button" class="primary-button" id="recordStartButton">録音開始</button>
+          <button type="button" class="secondary-button" id="recordStopButton" disabled>録音停止</button>
+        </div>
+      </section>
+
+      <section id="uploadAudioPanel" class="mvp-card" hidden>
+        <h2>音声をアップロード</h2>
+        <p class="section-copy">対応形式: mp3, mp4, wav, webm, m4a</p>
+        <label class="file-picker">
+          <span>音声ファイルを選択</span>
+          <input id="audioFileInput" type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/x-m4a" />
+        </label>
+      </section>
+
+      <section id="uploadVideoPanel" class="mvp-card" hidden>
+        <h2>動画をアップロード</h2>
+        <p class="section-copy">対応形式: mp4, webm, mov</p>
+        <label class="file-picker">
+          <span>動画ファイルを選択</span>
+          <input id="videoFileInput" type="file" accept="video/mp4,video/webm,video/quicktime" />
+        </label>
+      </section>
+
+      <section class="mvp-card">
+        <div class="section-heading">
+          <div>
+            <h2>確認ステータス</h2>
+            <p class="section-copy">60秒制限、対応形式、無音チェックをここで行います。</p>
+          </div>
+          <button type="button" class="ghost-button" id="clearMediaButton">クリア</button>
+        </div>
+        <p id="mediaStatus" class="status-banner" data-tone="neutral">loading...</p>
+      </section>
+
+      <section id="validatedPanel" class="mvp-card" hidden>
+        <h2>検証済みメディア</h2>
+        <dl id="validatedMeta" class="meta-list"></dl>
+        <video id="validatedPreview" class="validated-preview" controls hidden playsinline></video>
+      </section>
+
+      <section id="generationControls" class="mvp-card">
+        <div class="section-heading">
+          <div>
+            <h2>作品生成</h2>
+            <p class="section-copy">サーバー側の生成回数は <span id="attemptCounter">0 / 0</span> です。</p>
+          </div>
+        </div>
+        <div class="action-row">
+          <button type="button" class="primary-button" id="generateButton" disabled>この内容で作品を作る</button>
+        </div>
+        <p id="generationNote" class="micro-copy">検証済みメディアのみ生成に進めます。</p>
+      </section>
+
+      <section id="resultsEmpty" class="mvp-card">
+        <h2>生成結果</h2>
+        <p class="micro-copy">まだ作品は生成されていません。1回目を作成すると比較カードがここに表示されます。</p>
+      </section>
+
+      <section id="compareCard" class="mvp-card" hidden>
+        <div class="section-heading">
+          <div>
+            <h2>比較と最終選択</h2>
+            <p class="section-copy">1点だけ選択できます。選択後は再生成も再選択もできません。</p>
+          </div>
+        </div>
+        <div id="resultsList" class="results-grid"></div>
+      </section>
+
+      <section id="selectedSummaryCard" class="mvp-card" hidden>
+        <h2>選択済み作品</h2>
+        <div id="selectedSummary"></div>
+      </section>
+
+      <section id="messageFormCard" class="mvp-card" hidden>
+        <h2>メッセージと配送先</h2>
+        <p class="section-copy">最終作品が確定したので、次はメッセージと配送情報の入力に進めます。</p>
+        <div class="form-grid">
+          <label><span>To name</span><input type="text" placeholder="お父さんへ" /></label>
+          <label><span>From name</span><input type="text" placeholder="花子より" /></label>
+          <label class="full-span"><span>Message</span><textarea rows="4" placeholder="いつもありがとう。"></textarea></label>
+          <label><span>Postal code</span><input type="text" placeholder="100-0001" /></label>
+          <label class="full-span"><span>Address</span><input type="text" placeholder="東京都..." /></label>
+        </div>
+      </section>
+
+      <section class="mvp-card">
+        <h2>APIプレビュー</h2>
+        <pre id="sessionPayload" class="payload-box">loading...</pre>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/src/mvp/create-page.js"></script>
+</body>
+</html>

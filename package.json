@@ -1,0 +1,16 @@
+{
+  "name": "echo-garden",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check src/app.js && node --check src/config/access.js && node --check src/services/storage/artwork-upload.js && node --check src/services/shopify/shopify-redirect.js && node --check src/mvp/create-page.js && node --check src/mvp/lp-page.js && node --check src/mvp/session-api.js && node --check src/mvp/media-validation.js && node --check src/mvp/media-recorder.js && node --check src/mvp/artwork-save.js && node --check scripts/prepare-cloudflare.mjs",
+    "cf:prepare": "node scripts/prepare-cloudflare.mjs",
+    "cf:pages:dev": "npm run cf:prepare && wrangler pages dev .cloudflare/public",
+    "cf:pages:deploy": "npm run cf:prepare && wrangler pages deploy .cloudflare/public"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.787.0"
+  }
+}

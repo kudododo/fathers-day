@@ -1,0 +1,79 @@
+project:
+  name: Echo Garden Father’s Day MVP
+  target_users: invited_or_paid_beta_users
+  target_scale: 100
+  launch_type: beta
+  primary_goal: reduce_office_work_by_user_driven_generation
+
+assumptions:
+  existing_baseline:
+    - image_generation_works
+    - image_upload_to_cloudflare_r2_works
+    - video_upload_or_video_save_needs_implementation
+  storage:
+    metadata: cloudflare_d1
+    files: cloudflare_r2
+  frontend:
+    primary_device: smartphone
+    desktop_supported: true
+
+user_flow:
+  - pay_or_apply
+  - receive_creation_url
+  - open_create_page_with_token
+  - record_or_upload_media
+  - generate_attempt_1
+  - optionally_generate_attempt_2
+  - compare_attempts
+  - select_final_work
+  - enter_message_and_shipping
+  - confirm_and_submit
+  - view_completion_page
+
+input_modes:
+  record_camera_microphone:
+    enabled: true
+    preferred_on_mobile: true
+  upload_audio:
+    enabled: true
+  upload_video:
+    enabled: true
+
+media_limits:
+  max_duration_seconds: 60
+  max_generation_attempts: 2
+  silent_audio:
+    generate: false
+    error_message: 音声が検出できませんでした。もう一度録音してください。
+  low_volume_warning:
+    enabled: false
+
+aspect_ratio:
+  mobile_recording: "9:16"
+  desktop_recording: "16:9"
+  user_choice:
+    required: false
+  behavior: auto_detect_by_device_or_viewport
+
+generation:
+  max_attempts: 2
+  back_button_allows_retry: false
+  compare_attempts: true
+  final_selection_changeable: false
+
+lp:
+  route: "/lp/?id={lp_id}"
+  data_source: d1_api
+  noindex: true
+  expose_shipping_address: false
+  expose_public_message: true
+
+office:
+  management_first_phase: spreadsheet_or_csv
+  admin_dashboard_required: false
+  canva_replacement_required: false
+  csv_exports:
+    - envelope_csv
+    - letter_csv
+    - shipping_csv
+    - production_check_csv

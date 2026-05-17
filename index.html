@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Echo Garden</title>
+  <link rel="stylesheet" href="styles/ui.css">
+
+  <!-- p5.js & p5.sound -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h2>
+      <span>Echo Garden</span>
+      <button id="fullscreenBtn" style="font-size:11px;line-height:1;padding:4px 6px">⛶ Fullscreen</button>
+    </h2>
+
+    <!-- アスペクト比プリセット -->
+    <div class="row public-control public-aspect-control">
+      <label>比率</label>
+      <select id="canvasSize"></select>
+    </div>
+
+    <!-- 背景色（紙色） -->
+    <div class="row internal-control">
+      <label>背景色</label>
+      <input id="bgColor" type="color" value="#04070b">
+      <div style="font-size:11px;opacity:.6">キャンバスをこの色で塗り直し</div>
+    </div>
+
+    <!-- 発生位置モード：structured / randomized -->
+    <div class="row internal-control">
+      <label>発生位置モード</label>
+      <select id="spawnMode">
+        <option value="randomized" selected>ランダム拡散</option>
+        <option value="structured">規則ベース</option>
+        
+      </select>
+      <!-- <div style="font-size:11px;opacity:.6;line-height:1.3;max-width:180px;">
+        規則ベース: 音程ごとにエリアが分かれる<br>
+        ランダム拡散: 全体に散る
+      </div> -->
+    </div>
+
+    <!-- 追加：ミックス再生 -->
+    <div class="row public-control public-mode-control" style="align-items:flex-start;">
+      <label style="min-width:auto;">ミックス</label>
+      <div id="sceneMixOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="row internal-control">
+      <label>入力音量</label>
+      <input id="micGain" type="range" min="0" max="3" step="0.01" value="1">
+      <span id="micGainVal">1.00</span>
+      <div style="font-size:11px;opacity:.6">マイク入力そのもの（FFT/ピッチ検出に影響）</div>
+    </div>
+
+    <div class="row internal-control">
+      <label>感度 gain</label>
+      <input id="gain" type="range" min="0.2" max="5" step="0.1" value="2.6">
+      <span id="gainVal">2.6</span>
+    </div>
+
+    <div class="row internal-control">
+      <label>スムージング</label>
+      <input id="smooth" type="range" min="0" max="0.95" step="0.01" value="0.5">
+      <span id="smoothVal">0.50</span>
+    </div>
+
+    <div class="row internal-control">
+      <label>FFT サイズ</label>
+      <select id="fft">
+        <option>512</option>
+        <option selected>1024</option>
+        <option>2048</option>
+        <option>4096</option>
+      </select>
+    </div>
+
+    <!-- Pitch controls -->
+    <div class="row internal-control">
+      <label>ピッチ反映</label>
+      <select id="pitchMode">
+        <option value="off">オフ（色=周波数重心）</option>
+        <option value="cont" selected>連続（音程そのまま）</option>
+        <option value="snapM">スナップ（メジャー）</option>
+        <option value="snapm">スナップ（マイナー）</option>
+      </select>
+    </div>
+
+    <div class="row internal-control">
+      <label>キー</label>
+      <select id="key">
+        <option value="C">C</option>
+        <option value="A" selected>A</option>
+        <option value="G">G</option>
+        <option value="D">D</option>
+        <option value="E">E</option>
+        <option value="F">F</option>
+        <option value="B">B</option>
+        <option value="F#">F#</option>
+        <option value="Eb">Eb</option>
+        <option value="Bb">Bb</option>
+      </select>
+      <span id="noteReadout" style="font-size:12px;opacity:.85">♪ --</span>
+    </div>
+
+    <div class="row internal-control">
+      <label>色モード</label>
+      <select id="colorMode">
+        <option value="pitch" selected>ピッチ基準(多彩)</option>
+        <option value="centroid">周波数重心</option>
+        <option value="bass">低音ドリブン</option>
+        <option value="treble">高音ドリブン</option>
+        <option value="mono">モノクロ</option>
+      </select>
+    </div>
+
+    <div class="row internal-control">
+      <label>残像 trail</label>
+      <input id="trail" type="range" min="0.00" max="0.2" step="0.005" value="0.0">
+      <span id="trailVal">0.000</span>
+    </div>
+
+    <div class="row internal-control">
+      <label>粒子数</label>
+      <input id="particles" type="range" min="100" max="1600" step="50" value="600">
+      <span id="particlesVal">600</span>
+    </div>
+
+    <div class="row internal-export-control" style="align-items:flex-start;">
+      <label>印刷向け出力</label>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <select id="exportPreset"></select>
+        <button id="exportPrintPng" style="font-size:11px;line-height:1;padding:6px 8px;">🖨 出力サイズへ切替+PNG</button>
+        <div id="exportInfo" class="exportInfo">1280x720を構図基準に、選択サイズで明示的に書き出します。</div>
+      </div>
+    </div>
+
+    <div class="row public-control public-primary-actions" style="gap:6px">
+      <button id="toggle">🎤 Start</button>
+      <button id="pause">⏸ Pause</button>
+      <button id="snap" class="internal-export-action">📷 PNG</button>
+      <button id="metaJson" class="internal-export-action">{} JSON</button>
+      <button id="clear">🧹 Clear</button>
+      <button id="goodsCreate">グッズ作成する</button>
+      <button id="shareUrl" disabled>URLを共有</button>
+      <button id="shopifyHandoff" disabled>Shopifyへ進む</button>
+      <button id="record" class="internal-recording-action">🎬 録画開始</button>
+    </div>
+
+    <div class="row public-control public-productize-status">
+      <div id="productizeStatus" class="productizeStatus">作品を作ったらグッズ作成へ進めます。</div>
+      <div id="shareStatus" class="shareStatus">保存後にURLを共有できます。</div>
+      <div id="handoffStatus" class="handoffStatus">保存後にShopifyへ進めます。</div>
+    </div>
+
+    <!-- 自動キャプチャ -->
+    <div class="row internal-capture-control" style="align-items:flex-start;">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="min-width:auto;display:flex;align-items:center;gap:6px;">
+          <input id="autoCapture" type="checkbox">
+          <span>自動キャプチャ</span>
+        </label>
+        <!-- 追加：キャプチャ間隔(ms) -->
+        <div class="row" style="align-items:center; gap:8px;">
+          <label style="min-width:auto;">間隔(ms)</label>
+          <input id="captureIntervalMs" type="number" value="5000" min="200" step="100" style="width:100px;">
+          <div class="mini-note">最小200ms。変更すると次回から即反映。最初にフォルダ選択が必要（Chrome系推奨）。</div>
+        </div>
+        <button id="pickFolder" style="font-size:11px;line-height:1;padding:4px 6px;">📁 保存フォルダ選択</button>
+        <div id="folderPath" class="pathLabel"></div>
+      </div>
+    </div>
+
+    <div class="row public-help-control" style="font-size:11px;line-height:1.4;opacity:.75">
+      <div><span class="kbd">Esc</span> = 全画面解除</div>
+      <div><span class="kbd">F11</span> or Fullscreenボタン = フル画面</div>
+    </div>
+  </div>
+
+  <div id="footer">
+    <div>音声入力: <span id="stat">停止</span></div>
+    <div id="debugSize">Canvas: 1920x1080</div>
+    <div id="debugBG">BG: #04070b</div>
+  </div>
+
+  <!-- 最初から非表示: 設定いじってからStartできる -->
+  <div id="hint" class="hidden">
+    <div class="box">
+      <div style="font-size:18px;margin-bottom:6px">🎤 マイクを有効化</div>
+      <div>歌声の音程で色や筆の方向が変わります（ピッチ推定＋多色）。<br>スペースキーでも開始できます。</div>
+      <button id="startBtn">マイクを開始</button>
+    </div>
+  </div>
+
+<script src="config/app.config.js"></script>
+<script src="config/ui-registry.config.js"></script>
+<script type="module" src="src/app.js"></script>
+<script src="src/ui/bindings.js"></script>
+<script src="src/runtime/legacy-runtime.js"></script>
+</body>
+</html>
