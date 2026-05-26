@@ -12,6 +12,7 @@ MAX_MEDIA_DURATION_SECONDS = "60"
 MAX_AUDIO_UPLOAD_MB = "20"
 MAX_VIDEO_UPLOAD_MB = "100"
 CAMPAIGN_SLUG = "fathers-day-2026"
+R2_PUBLIC_BASE_URL = https://assets.echo-garden.jp/
 
 [[d1_databases]]
 binding = "DB"
