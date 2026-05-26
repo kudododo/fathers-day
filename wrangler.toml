@@ -4,9 +4,9 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".cloudflare/public"
 
 [vars]
-APP_BASE_URL = "https://example.com"
-LP_BASE_URL = "https://example.com/lp"
-CREATE_BASE_URL = "https://example.com/create"
+APP_BASE_URL = "https://stg。echo-garden.jp"
+LP_BASE_URL = "https://stg。echo-garden.jp/lp"
+CREATE_BASE_URL = "https://stg。echo-garden.jp/create"
 MAX_GENERATION_ATTEMPTS = "2"
 MAX_MEDIA_DURATION_SECONDS = "60"
 MAX_AUDIO_UPLOAD_MB = "20"
@@ -16,7 +16,7 @@ CAMPAIGN_SLUG = "fathers-day-2026"
 [[d1_databases]]
 binding = "DB"
 database_name = "echo-garden-mvp"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "61c428b3-1ff8-441f-9a65-2f7ae7fb3f5e"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
