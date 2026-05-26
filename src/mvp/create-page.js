@@ -1,7 +1,7 @@
 import { generateArtworkFromMedia } from './artwork-save.js';
 import { createMediaRecorderController } from './media-recorder.js';
 import { clearValidatedMedia, MAX_MEDIA_DURATION_SECONDS, validateSelectedMedia } from './media-validation.js';
-import { loadSession, selectArtwork } from './session-api.js';
+import { loadSession, selectArtwork, submitGift } from './session-api.js';
 
 const PROCESSING_MESSAGE = 'アップロード中です。画面を閉じないでください。';
 const MODE_LABELS = {
@@ -17,6 +17,7 @@ const state = {
   validatedMedia: null,
   recorder: null,
   isGenerating: false,
+  isSubmittingGift: false,
 };
 
 function getToken(){
@@ -145,7 +146,34 @@ function renderAttemptState(){
   document.getElementById('generationControls').hidden = isSelectionLocked();
   document.getElementById('messageFormCard').hidden = !isSelectionLocked();
   document.getElementById('selectedSummaryCard').hidden = !isSelectionLocked();
+  renderGiftFormState();
   renderGenerateButton();
+}
+
+function renderGiftFormState(){
+  const button = document.getElementById('giftSubmitButton');
+  const status = document.getElementById('giftSubmitStatus');
+  const lpLink = document.getElementById('lpPreviewLink');
+  const session = getSession();
+  const isSubmitted = session?.status === 'submitted';
+  button.disabled = !isSelectionLocked() || state.isSubmittingGift || isSubmitted;
+  button.textContent = state.isSubmittingGift ? '送信中...' : '内容を送信する';
+  if(isSubmitted){
+    status.dataset.tone = 'success';
+    status.textContent = '送信が完了しました。LP を確認できます。';
+  }else if(isSelectionLocked()){
+    status.dataset.tone = 'neutral';
+    status.textContent = '最終作品が確定しています。メッセージと配送先を送信してください。';
+  }else{
+    status.dataset.tone = 'neutral';
+    status.textContent = '選択後に送信できます。';
+  }
+  if(session?.lp_id){
+    lpLink.href = `/lp/?id=${encodeURIComponent(session.lp_id)}`;
+    lpLink.hidden = false;
+  }else{
+    lpLink.hidden = true;
+  }
 }
 
 function renderValidatedMedia(result){
@@ -246,6 +274,26 @@ function renderSelectedSummary(){
   `;
 }
 
+function populateGiftForm(){
+  const payload = state.sessionPayload || {};
+  const session = payload.session || {};
+  const giftMessage = payload.gift_message || {};
+  const shipping = payload.shipping || {};
+  document.getElementById('toNameInput').value = giftMessage.to_display_name || '';
+  document.getElementById('fromNameInput').value = giftMessage.from_display_name || '';
+  document.getElementById('messageInput').value = giftMessage.message || '';
+  document.getElementById('recipientNameInput').value = shipping.recipient_name || '';
+  document.getElementById('postalCodeInput').value = shipping.postal_code || '';
+  document.getElementById('addressLine1Input').value = shipping.address_line1 || '';
+  document.getElementById('addressLine2Input').value = shipping.address_line2 || '';
+  document.getElementById('phoneInput').value = shipping.phone || '';
+  if(session.status === 'submitted'){
+    document.getElementById('giftForm').querySelectorAll('input, textarea').forEach((field) => {
+      field.disabled = true;
+    });
+  }
+}
+
 function renderResults(){
   const artworks = getArtworks();
   const list = document.getElementById('resultsList');
@@ -286,6 +334,7 @@ function renderResults(){
   }
 
   renderSelectedSummary();
+  populateGiftForm();
 }
 
 async function handleGenerateArtwork(){
@@ -396,6 +445,49 @@ function bindGenerateButton(){
   document.getElementById('generateButton').addEventListener('click', handleGenerateArtwork);
 }
 
+function collectGiftPayload(){
+  return {
+    token: state.token,
+    message: {
+      to_display_name: document.getElementById('toNameInput').value.trim(),
+      from_display_name: document.getElementById('fromNameInput').value.trim(),
+      message: document.getElementById('messageInput').value.trim(),
+    },
+    shipping: {
+      recipient_name: document.getElementById('recipientNameInput').value.trim(),
+      postal_code: document.getElementById('postalCodeInput').value.trim(),
+      address_line1: document.getElementById('addressLine1Input').value.trim(),
+      address_line2: document.getElementById('addressLine2Input').value.trim(),
+      phone: document.getElementById('phoneInput').value.trim(),
+    },
+  };
+}
+
+function bindGiftForm(){
+  document.getElementById('giftForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if(!isSelectionLocked() || state.isSubmittingGift) return;
+    state.isSubmittingGift = true;
+    renderGiftFormState();
+    setStatus('メッセージと配送先を送信しています。', 'processing');
+    try{
+      await submitGift(collectGiftPayload());
+      const refreshed = await loadSession(state.token);
+      state.sessionPayload = refreshed;
+      setSessionState({ token: state.token, payload: refreshed });
+      document.getElementById('giftForm').querySelectorAll('input, textarea').forEach((field) => {
+        field.disabled = true;
+      });
+      setStatus('送信が完了しました。LP を確認してください。', 'success');
+    }catch(err){
+      setStatus(err.message || '送信に失敗しました。', 'error');
+    }finally{
+      state.isSubmittingGift = false;
+      renderGiftFormState();
+    }
+  });
+}
+
 async function main(){
   state.token = getToken();
   bindModeButtons();
@@ -403,6 +495,7 @@ async function main(){
   bindRecorderControls();
   bindResetButton();
   bindGenerateButton();
+  bindGiftForm();
   renderMode();
   renderTimer(0);
   renderRecorderState('idle');

@@ -36,3 +36,18 @@ export async function selectArtwork({ artworkId, token }){
   }
   return data;
 }
+
+export async function submitGift(payload){
+  const response = await fetch('/api/gift/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json();
+  if(!response.ok){
+    throw new Error(data?.error || 'failed to submit gift');
+  }
+  return data;
+}

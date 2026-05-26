@@ -156,9 +156,31 @@ async function listArtworksBySessionId(env, sessionId){
 }
 
 async function buildSessionPayload(env, session){
+  const giftMessage = await env.DB.prepare(
+    `SELECT to_display_name, from_display_name, message
+     FROM gift_messages
+     WHERE session_id = ?1`
+  ).bind(session.id).first();
+  const shipping = await env.DB.prepare(
+    `SELECT recipient_name, postal_code, address_line1, address_line2, phone
+     FROM shipping_addresses
+     WHERE session_id = ?1`
+  ).bind(session.id).first();
   return {
     session,
     artworks: await listArtworksBySessionId(env, session.id),
+    gift_message: giftMessage ? {
+      to_display_name: giftMessage.to_display_name,
+      from_display_name: giftMessage.from_display_name,
+      message: giftMessage.message,
+    } : null,
+    shipping: shipping ? {
+      recipient_name: shipping.recipient_name,
+      postal_code: shipping.postal_code,
+      address_line1: shipping.address_line1,
+      address_line2: shipping.address_line2 || '',
+      phone: shipping.phone || '',
+    } : null,
   };
 }
 

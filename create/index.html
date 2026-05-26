@@ -120,13 +120,23 @@
       <section id="messageFormCard" class="mvp-card" hidden>
         <h2>メッセージと配送先</h2>
         <p class="section-copy">最終作品が確定したので、次はメッセージと配送情報の入力に進めます。</p>
-        <div class="form-grid">
-          <label><span>To name</span><input type="text" placeholder="お父さんへ" /></label>
-          <label><span>From name</span><input type="text" placeholder="花子より" /></label>
-          <label class="full-span"><span>Message</span><textarea rows="4" placeholder="いつもありがとう。"></textarea></label>
-          <label><span>Postal code</span><input type="text" placeholder="100-0001" /></label>
-          <label class="full-span"><span>Address</span><input type="text" placeholder="東京都..." /></label>
-        </div>
+        <form id="giftForm">
+          <div class="form-grid">
+            <label><span>To name</span><input id="toNameInput" name="to_display_name" type="text" placeholder="お父さんへ" required /></label>
+            <label><span>From name</span><input id="fromNameInput" name="from_display_name" type="text" placeholder="花子より" required /></label>
+            <label class="full-span"><span>Message</span><textarea id="messageInput" name="message" rows="4" placeholder="いつもありがとう。" required></textarea></label>
+            <label><span>Recipient name</span><input id="recipientNameInput" name="recipient_name" type="text" placeholder="山田 太郎" required /></label>
+            <label><span>Postal code</span><input id="postalCodeInput" name="postal_code" type="text" placeholder="100-0001" required /></label>
+            <label class="full-span"><span>Address</span><input id="addressLine1Input" name="address_line1" type="text" placeholder="東京都..." required /></label>
+            <label class="full-span"><span>Address line 2</span><input id="addressLine2Input" name="address_line2" type="text" placeholder="建物名・部屋番号" /></label>
+            <label><span>Phone (optional)</span><input id="phoneInput" name="phone" type="text" placeholder="090-1234-5678" /></label>
+          </div>
+          <div class="action-row">
+            <button type="submit" class="primary-button" id="giftSubmitButton">内容を送信する</button>
+            <a id="lpPreviewLink" class="ghost-button" href="#" hidden>LPを確認する</a>
+          </div>
+          <p id="giftSubmitStatus" class="status-banner" data-tone="neutral">選択後に送信できます。</p>
+        </form>
       </section>
 
       <section class="mvp-card">
