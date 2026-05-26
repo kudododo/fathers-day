@@ -4,9 +4,9 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".cloudflare/public"
 
 [vars]
-APP_BASE_URL = "https://stg。echo-garden.jp"
-LP_BASE_URL = "https://stg。echo-garden.jp/lp"
-CREATE_BASE_URL = "https://stg。echo-garden.jp/create"
+APP_BASE_URL = "https://stg.echo-garden.jp"
+LP_BASE_URL = "https://stg.echo-garden.jp/lp"
+CREATE_BASE_URL = "https://stg.echo-garden.jp/create"
 MAX_GENERATION_ATTEMPTS = "2"
 MAX_MEDIA_DURATION_SECONDS = "60"
 MAX_AUDIO_UPLOAD_MB = "20"
