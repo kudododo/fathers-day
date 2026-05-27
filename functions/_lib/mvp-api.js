@@ -384,6 +384,29 @@ export async function handleGetSession(context){
   }
 }
 
+export async function handleStartSession(context){
+  try{
+    const body = await parseJson(context.request);
+    const token = safeToken(body.token);
+    const session = await getSessionByToken(context.env, token);
+    if(!session){
+      return errorJson('session not found', 404);
+    }
+    if(session.status === 'draft'){
+      await context.env.DB.prepare(
+        `UPDATE gift_sessions
+         SET status = 'recording_started',
+             updated_at = ?1
+         WHERE id = ?2`
+      ).bind(new Date().toISOString(), session.id).run();
+    }
+    const updatedSession = await getSessionByToken(context.env, token);
+    return json(await buildSessionPayload(context.env, updatedSession));
+  }catch(error){
+    return errorJson(error.message || 'failed to start session', error.statusCode || 400);
+  }
+}
+
 export async function handleGetLp(context){
   try{
     const id = safeLpId(new URL(context.request.url).searchParams.get('id'));

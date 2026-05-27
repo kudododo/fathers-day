@@ -7,6 +7,21 @@ export async function loadSession(token){
   return payload;
 }
 
+export async function startSession(token){
+  const response = await fetch('/api/session/start', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  });
+  const payload = await response.json();
+  if(!response.ok){
+    throw new Error(payload?.error || 'failed to start session');
+  }
+  return payload;
+}
+
 export async function createArtworkAttempt(payload){
   const response = await fetch('/api/artworks', {
     method: 'POST',
