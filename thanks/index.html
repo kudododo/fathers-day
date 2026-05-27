@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Echo Garden Father’s Day Thanks</title>
+  <link rel="stylesheet" href="/styles/mvp.css" />
+</head>
+<body>
+  <main class="mvp-shell">
+    <p class="eyebrow">Submission Complete</p>
+    <h1>送信が完了しました</h1>
+    <p class="lede">作品とメッセージ、配送情報を受け付けました。公開用ページの確認はこちらから行えます。</p>
+
+    <section class="mvp-card">
+      <h2>公開ID</h2>
+      <p id="thanksLpId">-</p>
+    </section>
+
+    <section class="mvp-card">
+      <div class="action-row">
+        <a id="thanksLpLink" class="primary-button" href="#">公開LPを見る</a>
+        <a class="ghost-button" href="/create/?token=test">create に戻る</a>
+      </div>
+      <p id="thanksStatus" class="status-banner" data-tone="neutral">LP を読み込み中です。</p>
+    </section>
+
+    <section class="mvp-card">
+      <h2>公開プレビュー</h2>
+      <div id="thanksPreview" class="selected-summary-grid">
+        <div>
+          <p class="micro-copy">読み込み中です。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/mvp/thanks-page.js"></script>
+</body>
+</html>

@@ -479,6 +479,12 @@ function bindGiftForm(){
         field.disabled = true;
       });
       setStatus('送信が完了しました。LP を確認してください。', 'success');
+      const lpId = refreshed?.session?.lp_id;
+      if(lpId){
+        globalThis.setTimeout(() => {
+          globalThis.location.href = `/thanks/?id=${encodeURIComponent(lpId)}`;
+        }, 500);
+      }
     }catch(err){
       setStatus(err.message || '送信に失敗しました。', 'error');
     }finally{
