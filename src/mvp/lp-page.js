@@ -15,6 +15,26 @@ async function loadLp(lpId){
 function renderState({ lpId, payload, error }){
   document.getElementById('lpIdValue').textContent = lpId || '(missing)';
   document.getElementById('lpPayload').textContent = JSON.stringify(error ? { error } : payload, null, 2);
+  const preview = document.getElementById('lpPreview');
+  if(error){
+    preview.innerHTML = `<p class="status-banner" data-tone="error">${error}</p>`;
+    return;
+  }
+  const imageSection = payload?.image_url
+    ? `<img class="selected-summary-image" src="${payload.image_url}" alt="LP image preview" />`
+    : '<div><p class="micro-copy">画像はまだありません。</p></div>';
+  const videoSection = payload?.video_url
+    ? `<video class="result-video" src="${payload.video_url}" controls playsinline></video>`
+    : '<p class="micro-copy">動画はまだありません。</p>';
+  preview.innerHTML = `
+    ${imageSection}
+    <div>
+      <p class="eyebrow">To ${payload?.to_display_name || '-'}</p>
+      <h2>${payload?.message || '-'}</h2>
+      <p class="micro-copy">From ${payload?.from_display_name || '-'}</p>
+      ${videoSection}
+    </div>
+  `;
 }
 
 async function main(){

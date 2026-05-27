@@ -15,6 +15,14 @@ function errorJson(message, status = 400, extra = {}){
   return json({ error: message, ...extra }, { status });
 }
 
+function csvEscape(value){
+  const text = value == null ? '' : String(value);
+  if(/[",\n]/.test(text)){
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
 function getConfig(env){
   return {
     maxAttempts: Number(env.MAX_GENERATION_ATTEMPTS || 2),
@@ -594,4 +602,82 @@ export async function handleUpload(context, legacyImage = false){
       }
     );
   }
+}
+
+export async function handleOfficeExport(context){
+  const secret = context.request.headers.get('x-office-export-secret')
+    || new URL(context.request.url).searchParams.get('secret');
+  if(!context.env.OFFICE_EXPORT_SECRET || secret !== context.env.OFFICE_EXPORT_SECRET){
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  const rows = await context.env.DB.prepare(
+    `SELECT
+       gs.id AS session_id,
+       gs.lp_id AS lp_id,
+       gm.to_display_name AS to_display_name,
+       gm.from_display_name AS from_display_name,
+       gm.message AS message,
+       sa.recipient_name AS recipient_name,
+       sa.postal_code AS postal_code,
+       sa.address_line1 AS address_line1,
+       sa.address_line2 AS address_line2,
+       sa.shipping_status AS shipping_status,
+       a.image_url AS image_url,
+       a.video_url AS video_url
+     FROM gift_sessions gs
+     LEFT JOIN gift_messages gm ON gm.session_id = gs.id
+     LEFT JOIN shipping_addresses sa ON sa.session_id = gs.id
+     LEFT JOIN artworks a ON a.id = gs.selected_artwork_id
+     WHERE gs.status IN ('selected', 'submitted')
+     ORDER BY gs.created_at DESC`
+  ).all();
+
+  const appBaseUrl = String(context.env.APP_BASE_URL || '').replace(/\/+$/, '');
+  const header = [
+    'session_id',
+    'lp_id',
+    'lp_url',
+    'qr_target_url',
+    'to_display_name',
+    'from_display_name',
+    'message',
+    'recipient_name',
+    'postal_code',
+    'address_line1',
+    'address_line2',
+    'image_url',
+    'video_url',
+    'shipping_status',
+  ];
+  const lines = [header.join(',')];
+
+  for(const row of rows.results || []){
+    const lpUrl = row.lp_id && appBaseUrl ? `${appBaseUrl}/lp/?id=${row.lp_id}` : '';
+    const values = [
+      row.session_id,
+      row.lp_id,
+      lpUrl,
+      lpUrl,
+      row.to_display_name,
+      row.from_display_name,
+      row.message,
+      row.recipient_name,
+      row.postal_code,
+      row.address_line1,
+      row.address_line2,
+      row.image_url,
+      row.video_url,
+      row.shipping_status || 'unshipped',
+    ].map(csvEscape);
+    lines.push(values.join(','));
+  }
+
+  return new Response(lines.join('\n'), {
+    headers: {
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': 'attachment; filename="office-export.csv"',
+      'cache-control': 'no-store',
+    },
+  });
 }
