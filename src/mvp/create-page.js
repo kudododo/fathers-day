@@ -1,7 +1,7 @@
 import { generateArtworkFromMedia } from './artwork-save.js';
 import { createMediaRecorderController } from './media-recorder.js';
 import { clearValidatedMedia, MAX_MEDIA_DURATION_SECONDS, validateSelectedMedia } from './media-validation.js';
-import { loadSession, selectArtwork, submitGift } from './session-api.js';
+import { loadSession, selectArtwork, startSession, submitGift } from './session-api.js';
 
 const PROCESSING_MESSAGE = 'アップロード中です。画面を閉じないでください。';
 const MODE_LABELS = {
@@ -18,6 +18,7 @@ const state = {
   recorder: null,
   isGenerating: false,
   isSubmittingGift: false,
+  hasStartedSession: false,
 };
 
 function getToken(){
@@ -62,6 +63,19 @@ function setStatus(message, tone = 'neutral'){
 
 function getSession(){
   return state.sessionPayload?.session || null;
+}
+
+async function ensureSessionStarted(){
+  if(state.hasStartedSession) return;
+  const session = getSession();
+  if(!session || session.status !== 'draft') {
+    state.hasStartedSession = true;
+    return;
+  }
+  const payload = await startSession(state.token);
+  state.sessionPayload = payload;
+  state.hasStartedSession = true;
+  setSessionState({ token: state.token, payload });
 }
 
 function getArtworks(){
@@ -208,6 +222,7 @@ async function validateCandidate({ blob, sourceLabel }){
   clearValidationResult();
   setStatus(PROCESSING_MESSAGE, 'processing');
   try{
+    await ensureSessionStarted();
     const result = await validateSelectedMedia({
       blob,
       mode: state.activeMode,
@@ -416,6 +431,7 @@ function bindRecorderControls(){
     clearValidationResult();
     setStatus('カメラとマイクへのアクセスを確認しています。', 'neutral');
     try{
+      await ensureSessionStarted();
       await state.recorder.start();
       setStatus('録音を開始しました。', 'neutral');
     }catch(err){
@@ -516,6 +532,7 @@ async function main(){
   try{
     const payload = await loadSession(state.token);
     state.sessionPayload = payload;
+    state.hasStartedSession = payload?.session?.status !== 'draft';
     setSessionState({ token: state.token, payload });
     setStatus('入力方法を選んでください。', 'neutral');
   }catch(err){
