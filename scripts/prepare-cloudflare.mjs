@@ -11,6 +11,7 @@ const copyTargets = [
   'shopify-handoff-dry-run.html',
   'create',
   'lp',
+  'thanks',
   'styles',
   'src',
   'config',
